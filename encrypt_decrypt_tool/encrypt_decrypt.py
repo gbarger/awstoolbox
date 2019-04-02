@@ -4,8 +4,7 @@ import boto3
 
 
 def main():
-    session = boto3.session.Session()
-    kms_client = session.client('kms')
+    kms_client = get_kms_client()
 
     while True:
         clear()
@@ -42,17 +41,21 @@ def encrypt_menu(kms_client):
             input_key = input("provide input key or alias: ")
             input_string = input("string to encrypt: ")
 
-            ciphertext = kms_client.encrypt(
-                KeyId=input_key,
-                Plaintext=bytes(input_string, 'utf-8'),
-            )
-
-            print("\nencrypted string:\n{}\n".format(base64.b64encode(ciphertext["CiphertextBlob"]).decode("utf-8")))
+            print("\nencrypted string:\n{}\n".format(encrypt_value(kms_client, input_key, input_string)))
         elif input_value == "3":
             clear()
             return None
         else:
             print("Please select a valid value.\n")
+
+
+def encrypt_value(kms_client, input_key, input_string):
+    ciphertext = kms_client.encrypt(
+        KeyId=input_key,
+        Plaintext=bytes(input_string, 'utf-8'),
+    )
+
+    return  base64.b64encode(ciphertext["CiphertextBlob"]).decode("utf-8")
 
 
 def decrypt_menu(kms_client):
@@ -64,16 +67,28 @@ def decrypt_menu(kms_client):
         if input_value == "1":
             clear()
             input_string = input("string to decrypt: ")
-            plaintext = kms_client.decrypt(
-                CiphertextBlob=bytes(base64.b64decode(input_string))
-            )
 
-            print("\ndecrypted string:\n{}\n".format(plaintext["Plaintext"].decode("utf-8")))
+            print("\ndecrypted string:\n{}\n".format(decrypt_value(kms_client, input_string)))
         elif input_value == "2":
             clear()
             return None
         else:
             print("Please select a valid value.\n")
+
+
+def decrypt_value(kms_client, input_string):
+    plaintext = kms_client.decrypt(
+        CiphertextBlob=bytes(base64.b64decode(input_string))
+    )
+
+    return plaintext["Plaintext"].decode("utf-8")
+
+
+def get_kms_client():
+    session = boto3.session.Session()
+    kms_client = session.client('kms')
+
+    return kms_client
 
 
 def clear():
